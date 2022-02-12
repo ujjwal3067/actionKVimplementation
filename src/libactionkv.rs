@@ -5,6 +5,9 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use std::io::{self,*};
+use byteorder::LittleEndian;
+use byteorder::ReadBytesExt;
+use crc::crc32;
 use serde::{Serialize, Deserialize};
 
 type ByteString = Vec<u8>;
@@ -54,7 +57,33 @@ impl ActionKV {
         }
         Ok(())
     }
-    pub fn process_record(&mut self, buffer : &mut BufReader<File>) -> std::result::Result<_, Err>{ 
-    }  
-}
+
+    fn process_record<R : Read> (&mut self, f : &mut R) -> io::Result<KeyValuePair>
+    { 
+        let saved_checksum = f.read_u32::<LittleEndian>()?;
+        let key_len = f.read_u32::<LittleEndian>()?;
+        let val_len = f.read_u32::<LittleEndian>()?;
+        let data_len = key_len + val_len ; 
+        let mut data = ByteString::with_capacity(data_len as usize);
+        { 
+            f.by_ref() 
+                .take(data_len as u64)
+                .read_to_end(&mut data)?;
+        }
+
+        debug_assert_eq!(data.len() , data_len as usize);
+        let checksum = crc32::checksum_ieee(&data);
+        if checksum != saved_checksum { 
+            panic!( 
+                "data corruption encountered ({:08x} != {:08x})", 
+                checksum, saved_checksum 
+            )
+        }
+
+        let value = data.split_off(key_len as usize);
+        let key = data ; 
+        Ok(KeyValuePair { key, value })
+    } 
+} 
+
 
