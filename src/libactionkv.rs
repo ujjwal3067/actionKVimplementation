@@ -7,9 +7,6 @@ use std::collections::HashMap;
 use std::io::{self,*};
 use serde::{Serialize, Deserialize};
 
-
-
-
 type ByteString = Vec<u8>;
 
 type ByteStr = [u8];
@@ -53,10 +50,11 @@ impl ActionKV {
                     }
                 }
             };
-
             self.index.insert(kv.key, position);
         }
         Ok(())
     }
+    pub fn process_record(&mut self, buffer : &mut BufReader<File>) -> std::result::Result<_, Err>{ 
+    }  
 }
 
