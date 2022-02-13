@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use std::io::{self,*};
 use byteorder::LittleEndian;
-use byteorder::ReadBytesExt;
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use crc::crc32;
 use serde::{Serialize, Deserialize};
 
@@ -87,5 +87,3 @@ impl ActionKV {
         Ok(KeyValuePair { key, value })
     } 
 } 
-
-
