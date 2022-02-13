@@ -58,6 +58,7 @@ impl ActionKV {
         Ok(())
     }
 
+    // This method is responsible for reading key value pairs from disk
     fn process_record<R : Read> (f : &mut R) -> io::Result<KeyValuePair>
     { 
         let saved_checksum = f.read_u32::<LittleEndian>()?;
@@ -73,7 +74,6 @@ impl ActionKV {
 
         debug_assert_eq!(data.len() , data_len as usize);
         let checksum = crc32::checksum_ieee(&data);
-        //NOTE: checking if the checksum produced is what we expect it to be
         if checksum != saved_checksum { 
             panic!( 
                 "data corruption encountered ({:08x} != {:08x})", 
@@ -105,7 +105,7 @@ impl ActionKV {
         ) -> io::Result<u64> { 
 
 
-        let mut f = BufWriter::new(&mut self.f); 
+        let mut f = BufWriter::new(&mut self.f);  // prevents multiple system call
         let key_len = key.len() ; 
         let val_len = value.len() ; 
         let mut tmp = ByteString::with_capacity(key_len + val_len); 
@@ -125,4 +125,46 @@ impl ActionKV {
         f.write_all(&mut tmp)?;
         Ok(current_position)
     }
+
+    pub fn seek_to_end(&mut self) -> io::Result::<u64> { 
+        self.f.seek(SeekFrom::End(0))
+    }
+
+    pub fn get(
+            &mut self, 
+            position : u64, 
+        ) -> io::Result<KeyValuePair> { 
+        let mut f = BufReader::new(&mut self.f);
+        f.seek(SeekFrom::Start(position))?;
+        let kv = ActionKV::process_record(&mut f)?; 
+        Ok(kv)
+    }
+
+    pub fn find(
+            &mut self, 
+            target : &ByteStr, 
+        )-> io::Result<Option<(u64, ByteString)>> { 
+        let mut f = BufReader::new(&mut self.f);
+        let mut found : Option<(u64 , ByteString)> = None ; 
+        loop { 
+            let position = f.seek(SeekFrom::Current(0))?;
+            let maybe_kv = ActionKV::process_record(&mut f);
+            let kv = match  maybe_kv { 
+                Ok(kv) => kv , 
+                Err(err) =>  { 
+                    match err.kind()  { 
+                        io::ErrorKind::UnexpectedEof => { 
+                            break; 
+                        }
+                        _ => return Err(err),
+                    }
+                } 
+            };
+            if kv.key == target { 
+                found = Some((position, kv.value));
+            }
+        }
+        Ok(found)
+    }
+
 } 
