@@ -13,11 +13,11 @@ Usage :
 type ByteStr = [u8];
 type ByteString = Vec<u8>;
 
-fn store_index_on_disk(a: &mut ActionKV, index_key: &ByteStr) {
-    a.index.remove(index_key);
-    let index_as_bytes = bincode::serialize(&a.index).unwrap();
-    a.index = std::collections::HashMap::new();
-    a.insert(index_key, &index_as_bytes).unwrap();
+fn store_index_on_disk(store: &mut ActionKV, index_key: &ByteStr) {
+    store.index.remove(index_key);
+    let index_as_bytes = bincode::serialize(&store.index).unwrap();
+    store.index = std::collections::HashMap::new();
+    store.insert(index_key, &index_as_bytes).unwrap();
 }
 
 fn main() {
