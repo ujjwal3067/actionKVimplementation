@@ -20,7 +20,7 @@ pub struct KeyValuePair {
     pub value : ByteString, 
 }
 
-#[derivce(Debug)]
+#[derive(Debug)]
 pub struct ActionKV { 
     f : File, 
     pub index : HashMap<ByteString, u64>,  // mapping from keys to file location 
@@ -58,7 +58,7 @@ impl ActionKV {
         Ok(())
     }
 
-    fn process_record<R : Read> (&mut self, f : &mut R) -> io::Result<KeyValuePair>
+    fn process_record<R : Read> (f : &mut R) -> io::Result<KeyValuePair>
     { 
         let saved_checksum = f.read_u32::<LittleEndian>()?;
         let key_len = f.read_u32::<LittleEndian>()?;
@@ -73,10 +73,12 @@ impl ActionKV {
 
         debug_assert_eq!(data.len() , data_len as usize);
         let checksum = crc32::checksum_ieee(&data);
+        //NOTE: checking if the checksum produced is what we expect it to be
         if checksum != saved_checksum { 
             panic!( 
                 "data corruption encountered ({:08x} != {:08x})", 
                 checksum, saved_checksum 
+
             )
         }
 
