@@ -88,20 +88,23 @@ impl ActionKV {
     } 
 
     pub fn insert(
-        &mut self, 
-        key : &ByteStr, 
-        value : &ByteStr
+            &mut self, 
+            key : &ByteStr, 
+            value : &ByteStr
         )-> io::Result<()>{ 
+
         let position = self.insert_but_ignore_index(key, value)?; 
         self.index.insert(key.to_vec(), position);
         Ok(())
     }
 
     pub fn insert_but_ignore_index(
-        &mut self, 
-        key : &ByteStr, 
-        value : &ByteStr, 
+            &mut self, 
+            key : &ByteStr, 
+            value : &ByteStr, 
         ) -> io::Result<u64> { 
+
+
         let mut f = BufWriter::new(&mut self.f); 
         let key_len = key.len() ; 
         let val_len = value.len() ; 
