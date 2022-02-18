@@ -76,11 +76,13 @@ impl ActionKV {
             )
         }
 
+
         let value = data.split_off(key_len as usize);
         let key = data;
         Ok(KeyValuePair { key, value })
     }
 
+    /// public method to insert in the actionKV datab base
     pub fn insert(&mut self, key: &ByteStr, value: &ByteStr) -> io::Result<()> {
         let position = self.insert_but_ignore_index(key, value)?;
         self.index.insert(key.to_vec(), position);
